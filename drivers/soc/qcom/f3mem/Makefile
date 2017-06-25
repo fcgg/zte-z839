@@ -1,0 +1,1 @@
+obj-y := kernel_vendor_specific_service_v01.o f3mem.o

@@ -1,0 +1,154 @@
+/*
+ * Copyright (c) 2015, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/dts-v1/;
+
+#include "msm8909-pm8916-qrd-skut.dtsi"
+#include "zte-msm8909-pm8916-chapel.dtsi"
+#include "msm8909-camera-sensor-zte-mimir.dtsi"
+
+/ {
+	qcom,board-id= <0x1000b 106>, <0x1040b 106>;
+};
+
+&soc {
+	i2c@78b8000 {
+		ti2419x-chg@6B {
+			compatible = "zte,ti2419x-chg";
+			reg = <0x6B>;
+			interrupt-parent = <&msm_gpio>;
+			interrupts = <110 2>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&smb_int_default>;
+			regulator-name = "smb1360_otg_vreg";
+
+			zte,float-voltage-mv = <4352>;
+			zte,iterm-ma = <128>;
+			/*zte,hw-iterm-disabled;*/
+			/*zte,charging-disabled; changed by zte */
+			zte,recharge-thresh-mv = <100>; 
+			zte,warm_recharge-thresh-mv = <50>;
+			zte,vbatdet-max-err-mv = <20>;
+			zte,charging-timeout = <12>;
+			zte,input_voltage_mv = <4520>;
+			zte,max_usb_current = <1000>;
+			zte,max_battery_current = <1536>;
+			zte,thermal-mitigation = <1500 1000 900 500 0>;
+			zte,warm_bat_mv = <4000>;
+			zte,cool_bat_mv = <4000>;
+			zte,warm-bat-decidegc = <440>;
+			zte,cool-bat-decidegc = <100>;
+			zte,hot-bat-decidegc = <500>;
+			zte,cold-bat-decidegc = <20>;
+			zte,warm_bat_chg_ma = <512>;
+			zte,cool_bat_chg_ma = <512>;
+			qcom,tichg-vadc = <&pm8916_vadc>;
+			zte,batt-hot-percentage = <25>; /*for battery therm correcting*/
+			zte,batt-cold-percentage= <80>; /*for battery therm correcting*/
+		};
+
+		lc709203f_fg2@0B {
+			compatible = "zte,lc709203f_fg";
+			reg = <0x0B>;
+			zte,bat_full_charge_capacity = <2300>; /*depend on the battery cell used*/
+			zte,lc709203f_ite_threshold_high = <986>;
+			zte,lc709203f_ite_threshold_low  = <15>;
+			zte,lc709203f_pack_appli_value   = <40>;/*depend on the PCB,16mohm*/
+		};
+
+
+		/*aw2013@45 {
+	        compatible = "aw2013";
+	        reg = <0x45>;
+	        status = "ok";	
+	        aw2013_mode = < 7 >;
+		};*/
+
+	};
+};
+
+
+/ {
+	qrd_batterydata: qcom,battery-data {
+		qcom,rpull-up-kohm = <0>;
+		qcom,vref-batt-therm = <1800000>;
+
+		#include "batterydata-qrd-skut-4v35-2300mah.dtsi"
+	};
+};
+
+
+&soc {
+        zte_misc {
+            compatible = "zte-misc";
+            /*zte,use-ti-charger-internal-battery-switch;*/
+            hw_ver_id_0 {
+				label = "hw_ver_id_0";
+				gpios = <&msm_gpio 51 0>;
+            };
+            hw_ver_id_1 {
+				label = "hw_ver_id_1";
+				gpios = <&msm_gpio 52 0>;
+            };
+        };
+};
+&spmi_bus {
+
+	qcom,pm8916@0 {
+
+		qcom,charger {
+			status = "ok";
+			qcom,use-external-charger;
+		};
+
+		qcom,vmbms {
+			status = "ok";
+			qcom,battery-data = <&qrd_batterydata>;
+
+			qcom,v-cutoff-uv = <3400000>;
+			qcom,max-voltage-uv = <4350000>;
+			qcom,r-conn-mohm = <16>;
+			qcom,shutdown-soc-valid-limit = <100>;
+			qcom,low-soc-calculate-soc-threshold = <15>;
+			qcom,low-voltage-calculate-soc-ms = <1000>;
+			qcom,low-soc-calculate-soc-ms = <5000>;
+			qcom,calculate-soc-ms = <20000>;
+			qcom,volatge-soc-timeout-ms = <60000>;
+			qcom,low-voltage-threshold = <3450000>;
+			qcom,s3-ocv-tolerence-uv = <1200>;
+			qcom,s2-fifo-length = <5>;
+			qcom,low-soc-fifo-length = <2>;
+			qcom,bms-vadc = <&pm8916_vadc>;
+			qcom,bms-adc_tm = <&pm8916_adc_tm>;
+			qcom,pmic-revid = <&pm8916_revid>;
+
+			qcom,force-s3-on-suspend;
+			qcom,force-s2-in-charging;
+			qcom,report-charger-eoc;
+			qcom,resume-soc = <96>;
+		};
+		
+		/*spmi_lite is for batt present detect*/
+		spmi_lite {
+			compatible = "zte,spmi-lite";
+		};
+		
+	};
+
+	qcom,pm8916@1 {
+		qcom,vibrator@c000 {
+			qcom,vib-vtg-level-mV = <2700>;
+		};
+	};
+};
+
